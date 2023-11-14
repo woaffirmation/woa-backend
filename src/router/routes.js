@@ -5,7 +5,7 @@ const { validateToken } = require('../helpers/jwt')
 const router = express.Router();
 
 router.get('/', homeStart)
-router.get('/getquote/:authorization', getQuotes);
+router.get('/getQuotes/:authorization/:signature', getQuotes);
 router.post('/register', userRegister);
 
 module.exports = router;

@@ -32,18 +32,18 @@ const userRegister = async (req, res) => {
 			return response;
 		}
 
-		// const hashToken = await bcrypt.hash(accessToken, 10);
+		const hashToken = await bcrypt.hash(accessToken, 10);
 		const quotesId = crypto.randomInt(1, 20)
 
-		await sequelize.query('INSERT INTO users (name, signature, id_quotes) VALUES (?,?,?)', {
-			replacements: [username, signature, quotesId]
+		await sequelize.query('INSERT INTO users (name, signature, access_token, id_quotes) VALUES (?,?,?,?)', {
+			replacements: [username, signature, accessToken, quotesId]
 		})
 
 		const response = res.status(400).json({
 			status: 'success',
 			message: 'Berhasil Register',
 			data: {
-				jwt: accessToken,
+				jwt: hashToken,
 			}
 		})
 		return response;
@@ -58,12 +58,26 @@ const userRegister = async (req, res) => {
 
 const getQuotes = async (req, res) => {
 	try {
-		const authorization = req.params.authorization;
-		// const token = authorization.split(' ')[1];
-		const decode = jwt.verify(authorization, process.env.SECRET_KEY);
+		const { signature, authorization } = req.params
 
-		const [decodeData] = await sequelize.query('SELECT * FROM users WHERE name = ? AND signature = ?', {
-			replacements: [decode.name, decode.signature]
+		// const token = authorization.split(' ')[1];
+
+		const [searchSignature] = await sequelize.query('SELECT * FROM users WHERE signature = ?', {
+			replacements: [signature]
+		});
+
+		const isValid = await bcrypt.compare(searchSignature[0].access_token, authorization)
+
+		if (!isValid) {
+			const response = res.status(400).json({
+				status: 'fail',
+				message: 'Hash Token Salah',
+			})
+			return response;
+		}
+
+		const [decodeData] = await sequelize.query('SELECT * FROM users WHERE signature = ?', {
+			replacements: [signature]
 		});
 
 		if (!decodeData) {

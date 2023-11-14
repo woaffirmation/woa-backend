@@ -11,7 +11,7 @@
     "rules": {
         "import/no-extraneous-dependencies": ["error", {"Dependencies": false, "optionalDependencies": false, "peerDependencies": false}],
         "linebreak-style": "off",
-        "indent": ["error", 4],
+        "indent": ["error", 2],
         "no-console": "off"
     }
 }
