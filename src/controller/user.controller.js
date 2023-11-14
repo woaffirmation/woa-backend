@@ -35,8 +35,8 @@ const userRegister = async (req, res) => {
 		const hashToken = await bcrypt.hash(accessToken, 10);
 		const quotesId = crypto.randomInt(1, 20)
 
-		await sequelize.query('INSERT INTO users (name, signature, access_token, id_quotes) VALUES (?,?,?,?)', {
-			replacements: [username, signature, accessToken, quotesId]
+		await sequelize.query('INSERT INTO users (name, signature, access_token, id_quotes, expired_date) VALUES (?,?,?,?)', {
+			replacements: [username, signature, accessToken, quotesId, Date.now()]
 		})
 
 		const response = res.status(400).json({
