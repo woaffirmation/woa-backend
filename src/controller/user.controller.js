@@ -36,7 +36,7 @@ const userRegister = async (req, res) => {
 		const quotesId = crypto.randomInt(1, 20)
 
 		await sequelize.query('INSERT INTO users (name, signature, access_token, id_quotes, expired_date) VALUES (?,?,?,?,?)', {
-			replacements: [username, signature, accessToken, quotesId, 	Date.now()],
+			replacements: [username, signature, accessToken, quotesId, Date.now()],
 		})
 
 		const response = res.status(400).json({
@@ -44,6 +44,7 @@ const userRegister = async (req, res) => {
 			message: 'Berhasil Register',
 			data: {
 				jwt: hashToken,
+				signature: signature
 			}
 		})
 		return response;
