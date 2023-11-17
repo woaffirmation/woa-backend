@@ -61,8 +61,6 @@ const getQuotes = async (req, res) => {
 	try {
 		const { signature, authorization } = req.params
 
-		// const token = authorization.split(' ')[1];
-
 		const [searchSignature] = await sequelize.query('SELECT * FROM users WHERE signature = ?', {
 			replacements: [signature]
 		});
@@ -89,16 +87,18 @@ const getQuotes = async (req, res) => {
 			return response;
 		}
 
-		const quotesId = crypto.randomInt(1, 20)
+		const [amountId] = await sequelize.query('SELECT COUNT(id_quotes) as cnt FROM quotes')
+
+		const quotesId = crypto.randomInt(1, amountId[0].cnt)
 
 		const [data] = await sequelize.query('SELECT * FROM quotes WHERE id_quotes = ?', {
-			replacements: [decodeData[0].id_quotes],
+			replacements: [quotesId],
 		})
 
 		if (data[0].status) {
-			getQuotes()
+			await getQuotes(req, res)
 		}
-
+		
 		const date = Date.now()
 		const expiredTime = Date.now() + 4 * 60 * 60 * 1000;
 
@@ -121,9 +121,14 @@ const getQuotes = async (req, res) => {
 			});
 		}
 
+		const [output] = await sequelize.query('SELECT * FROM quotes WHERE id_quotes = ?', {
+			replacements: [decodeData[0].id_quotes],
+		})
+
+		console.log(output);
 		const response = res.status(200).json({
-			quotes: data[0].quotes,
-			author: data[0].author
+			quotes: output[0].quotes,
+			author: output[0].author
 		});
 
 		return response;
