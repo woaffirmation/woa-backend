@@ -1,6 +1,7 @@
 const crypto = require('crypto')
 const sequelize = require('../config/db.config')
 const { createToken } = require('../helpers/jwt')
+const { generateQuotes } = require('../helpers/generateQuotes')
 const { nanoid } = require('nanoid');
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
@@ -33,11 +34,15 @@ const userRegister = async (req, res) => {
 		}
 
 		const hashToken = await bcrypt.hash(accessToken, 10);
-		const quotesId = crypto.randomInt(1, 20)
+		const quotesId = await generateQuotes()
 
 		await sequelize.query('INSERT INTO users (name, signature, access_token, id_quotes, expired_date) VALUES (?,?,?,?,?)', {
 			replacements: [username, signature, accessToken, quotesId, Date.now()],
-		})
+		});
+
+		await sequelize.query('UPDATE quotes SET status = ? WHERE id_quotes = ? ', {
+			replacements: [true, quotesId]
+		});
 
 		const response = res.status(400).json({
 			status: 'success',
@@ -87,25 +92,15 @@ const getQuotes = async (req, res) => {
 			return response;
 		}
 
-		const [amountId] = await sequelize.query('SELECT COUNT(id_quotes) as cnt FROM quotes')
+		const availableQuotes = await generateQuotes()
 
-		const quotesId = crypto.randomInt(1, amountId[0].cnt)
-
-		const [data] = await sequelize.query('SELECT * FROM quotes WHERE id_quotes = ?', {
-			replacements: [quotesId],
-		})
-
-		if (data[0].status) {
-			await getQuotes(req, res)
-		}
-		
 		const date = Date.now()
 		const expiredTime = Date.now() + 4 * 60 * 60 * 1000;
 
 		if (decodeData[0].expired_date < date) {
 
 			await sequelize.query('UPDATE users SET id_quotes = ? WHERE id = ?', {
-				replacements: [quotesId, decodeData[0].id]
+				replacements: [availableQuotes, decodeData[0].id]
 			});
 
 			await sequelize.query('UPDATE users SET expired_date = ? WHERE id = ?', {
@@ -117,16 +112,16 @@ const getQuotes = async (req, res) => {
 			});
 
 			await sequelize.query('UPDATE quotes SET status = ? WHERE id_quotes = ? ', {
-				replacements: [true, quotesId]
+				replacements: [true, availableQuotes]
 			});
 		}
+		const [newData] = await sequelize.query('SELECT id_quotes FROM users',);
 
 		const [output] = await sequelize.query('SELECT * FROM quotes WHERE id_quotes = ?', {
-			replacements: [decodeData[0].id_quotes],
+			replacements: [newData[0].id_quotes],
 		})
 
-		console.log(output);
-		const response = res.status(200).json({
+		const response = await res.status(200).json({
 			quotes: output[0].quotes,
 			author: output[0].author
 		});
