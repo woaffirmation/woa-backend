@@ -114,6 +114,7 @@ const getQuotes = async (req, res) => {
 			await sequelize.query('UPDATE quotes SET status = ? WHERE id_quotes = ? ', {
 				replacements: [true, availableQuotes]
 			});
+			//tes
 		}
 		const [newData] = await sequelize.query('SELECT id_quotes FROM users',);
 
